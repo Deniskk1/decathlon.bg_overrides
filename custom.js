@@ -714,6 +714,36 @@ function moveElementsToPriceRow() {
 
 document.addEventListener("DOMContentLoaded", moveElementsToPriceRow);
 
+// Option for clear everything in cart with one click
+// Created on 26.06.2023
+
+function addClearCartButton() {
+  const buttonDeleteCart = document.createElement("button");
+  buttonDeleteCart.innerHTML = "Изчисти количката";
+
+  const buttonContainer = document.createElement("div");
+  buttonContainer.classList.add("button-delete-all-cart");
+  buttonContainer.appendChild(buttonDeleteCart);
+
+  const cartButtons = document.querySelector(
+    "#cart .cart-buttons .col-md-6:nth-child(2)"
+  );
+
+  if (cartButtons) {
+    cartButtons.appendChild(buttonContainer);
+
+    buttonDeleteCart.addEventListener("click", function () {
+      const buttons = document.querySelectorAll(
+        "#cart .product-line-grid-remove a.remove-from-cart"
+      );
+
+      buttons.forEach(function (btn) {
+        btn.click();
+      });
+    });
+  }
+}
+
 setTermsAndConditions();
 changeStickers();
 addCustomClassesToFooter();
@@ -731,6 +761,7 @@ setInterval(addBlizoDoMenClass, 1000);
 changeFontWeight();
 removeImageLinks();
 addAddressStepNote();
+addClearCartButton();
 
 setTimeout(() => {
   addCampingCategories();
