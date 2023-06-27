@@ -404,22 +404,12 @@ function initAvailabilityUpdate() {
 
   const addSpinner = (node) => {
     const icon = document.createElement("i");
-
     icon.classList.add("fa", "fa-circle-o-notch", "fa-spin", "fa-1x");
     icon.style.marginLeft = "0.5em";
-
-    if (node.innerText.trim() === "Няма Наличност") {
-      icon.style.color = DANGER_COLOR;
-    } else {
-      icon.classList.add("color--primary");
-    }
-
+    node.innerText = ""; // Clear the content of the node
     node.appendChild(icon);
   };
 
-  // Before the data event for the availability is present we need to fetch and observe the
-  // store availability elements in order to add the loader when they change. If we just add
-  // the spinner they can hide it when rerendered.
   storeAvailabilities.forEach((node) => {
     addSpinner(node);
 
@@ -441,7 +431,6 @@ function initAvailabilityUpdate() {
   });
 
   setInterval(function () {
-    // Fetch the latest event in order to cover the case where the size was changed.
     const availabilityEvents = window.dataLayer.filter(
       (e) => e.event === "product page view store availability"
     );
@@ -449,8 +438,6 @@ function initAvailabilityUpdate() {
     const availabilityEvent = availabilityEvents[availabilityEvents.length - 1];
 
     if (availabilityEvent) {
-      // Once the event is available we no longer need the observer to work on the store availability
-      // elements.
       observers.forEach((obs) => obs.disconnect());
 
       const stores = availabilityEvent.products.articles[0].availability.stores;
@@ -491,6 +478,10 @@ function initAvailabilityUpdate() {
 
 window.addEventListener("load", (event) => {
   if (document.body.id === "product") {
+    const storeAvailabilities = document.querySelectorAll('span[id*="store-"]');
+    storeAvailabilities.forEach((node) => {
+      node.innerText = ""; // Clear the content of the node initially
+    });
     initAvailabilityUpdate();
   }
 });
@@ -744,6 +735,69 @@ function addClearCartButton() {
   }
 }
 
+// Add online store when you check availabilities
+// Created on 27.06.2023
+
+const AVAILABILITY_API =
+  "https://decathlon-check-availability-hfwqmpnq3a-ey.a.run.app/";
+const R_DELIVERIES = {
+  country: { type: "country", label: "В наличност" },
+  region: { type: "region", label: "В наличност" },
+  central: { type: "central", label: "В наличност" },
+  unavailable: { type: "unavailable", label: "Няма наличност" },
+};
+
+function getDeliveryInformation(product) {
+  if (product.in_country_warehouse) return R_DELIVERIES.country;
+  if (product.in_regional_warehouse) return R_DELIVERIES.region;
+  if (product.in_central_warehouse) return R_DELIVERIES.central;
+
+  return R_DELIVERIES.unavailable;
+}
+
+async function fetchProductAvailability() {
+  const response = await fetch(
+    `${AVAILABILITY_API}?url=${window.location.href}`
+  );
+  const product = await response.json();
+  return product;
+}
+
+function updateDeliveryModal(deliveryInfo) {
+  const storesEl = document.querySelector(".js-list--stores");
+  const storeEl = document.createElement("li");
+  storeEl.className = "list--stores online-availability";
+  storeEl.innerHTML = `
+<span class="store--name-availability">
+<strong>Онлайн магазин</strong>
+</span>
+<span class="store-address">
+<span class="r-store-availability-pp">${deliveryInfo.label}</span>
+</span>`;
+
+  storesEl.prepend(storeEl);
+}
+
+function initProductAvailabilityGeneric() {
+  const descriptionEl = document.querySelector(
+    ".page-product .block--description"
+  );
+
+  if (descriptionEl) {
+    fetchProductAvailability()
+      .then((product) => {
+        const deliveryInfo = getDeliveryInformation(product);
+
+        setTimeout(() => {
+          updateDeliveryModal(deliveryInfo);
+        }, 1000);
+      })
+      .catch((error) => {
+        console.error("Error fetching product availability:", error);
+      });
+  }
+}
+
 setTermsAndConditions();
 changeStickers();
 addCustomClassesToFooter();
@@ -762,6 +816,7 @@ changeFontWeight();
 removeImageLinks();
 addAddressStepNote();
 addClearCartButton();
+initProductAvailabilityGeneric();
 
 setTimeout(() => {
   addCampingCategories();

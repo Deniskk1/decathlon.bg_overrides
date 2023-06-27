@@ -819,6 +819,21 @@
   height: 32px;
 }
 
+/* Add online store when you check availabilities */
+/* Created on 27.06.2023 */
+
+.page-product .online-availability {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 82px !important;
+}
+
+.page-product .r-store-availability-pp {
+  color: #0082c3;
+  font-weight: 600;
+}
+
 /*******************************************************************/
 /*******************************************************************/
 /*******************************************************************/
